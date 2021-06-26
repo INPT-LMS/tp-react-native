@@ -10,8 +10,46 @@ import {
 } from 'react-native';
 
 
+function urlPourRequete(valeur) {
+    return 'https://restcountries.eu/rest/v2/name/'
+     + valeur;
+    } 
+
+
 export default class PageDeRecherche extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+        requeteDeRecherche: 'morocco',
+        estEnChargement: false,
+        message: '', 
+       };
+       }
+       _gererLaReponse = (reponse) => {
+        this.setState({ estEnChargement: false, message: '' });
+        this.props.navigation.navigate('Resultats', {listings: reponse});
+        };
+       _auChangementDeLaRecherche = (event) => {
+        this.setState({ requeteDeRecherche: event.nativeEvent.text });
+       };
+       _executerRequete = (requete) => {
+        console.log(requete);
+        this.setState({ estEnChargement: true });
+        fetch(requete)
+            .then(reponse => reponse.json())
+            .then(json => this._gererLaReponse(json))
+            .catch(error =>
+            this.setState({
+            estEnChargement: false,
+            message: 'Quelque chose de mauvais s\'est produit' + error
+            })); 
+       };
+       _auDemarrageDeLaRecherche = () => {
+        const requete = urlPourRequete(this.state.requeteDeRecherche);
+        this._executerRequete(requete);
+       }; 
     render() {
+        const indicateurDeChargement = this.state.estEnChargement ? <ActivityIndicator size='large' color='0000ff'/> : null;
         return (
             <View style={styles.conteneur}>
                 <Text style={styles.description}>
@@ -22,15 +60,21 @@ export default class PageDeRecherche extends Component {
                 </Text>
                 <View style={styles.fluxDroite}>
                     <TextInput
-                        underlineColorAndroid={'transparent'}
+                        underlineColorAndroid={'transparent'} 
                         style={styles.requeteEntree}
-                        placeholder='Rechercher par nom de pays' />
+                        value={this.state.requeteDeRecherche}
+                        onChange={this._auChangementDeLaRecherche}
+                        placeholder='Rechercher par nom de pays'/>
+                        
                     <Button
-                        onPress={() => { }}
+                        onPress = {this._auDemarrageDeLaRecherche}
                         color='#48AAEC'
                         title='Démarrer'
                     />
                 </View>
+                <Image source={require('./ressources/pays.png')} style={styles.image}/>
+                {indicateurDeChargement} 
+                <Text style={styles.description}>{this.state.message}</Text> 
             </View>
         );
     }
@@ -43,6 +87,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#656565'
     },
+    image: {
+        width: 220,
+        height: 140,
+       },
     conteneur: {
         padding: 30,
         marginTop: 65,
